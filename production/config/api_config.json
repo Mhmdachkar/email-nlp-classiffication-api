@@ -1,0 +1,16 @@
+{
+  "host": "0.0.0.0",
+  "port": 8080,
+  "debug": false,
+  "workers": 4,
+  "timeout": 30,
+  "max_requests": 1000,
+  "model_version": "final_improved_calibrated",
+  "accuracy_target": "99.7%",
+  "log_level": "INFO",
+  "cors_enabled": true,
+  "rate_limit": {
+    "requests_per_minute": 100,
+    "burst_size": 20
+  }
+}

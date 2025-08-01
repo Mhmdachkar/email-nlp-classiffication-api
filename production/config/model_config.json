@@ -1,0 +1,22 @@
+{
+  "model_files": {
+    "model": "models/final_calibrated_model_*.pkl",
+    "scaler": "models/final_scaler_*.pkl",
+    "encoder": "models/final_label_encoder_*.pkl"
+  },
+  "features": {
+    "max_length": 1000,
+    "use_tfidf": true,
+    "use_sentiment": true,
+    "use_length_features": true
+  },
+  "categories": [
+    "Personal",
+    "Spam",
+    "Standard",
+    "Urgent",
+    "Work"
+  ],
+  "confidence_threshold": 0.7,
+  "batch_size": 100
+}
