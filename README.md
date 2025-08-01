@@ -31,16 +31,22 @@ A high-performance email classification API that uses machine learning to catego
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/email-nlp-project.git
-cd email-nlp-project
+git clone https://github.com/Mhmdachkar/email-nlp-classiffication-api.git
+cd email-nlp-classiffication-api
 ```
 
-2. **Install dependencies**
+2. **Download the model files**
+```bash
+python download_models.py
+```
+*Note: Model files are large (~700MB total). You'll need to configure the download URLs first.*
+
+3. **Install dependencies**
 ```bash
 pip install -r production/requirements.txt
 ```
 
-3. **Start the API**
+4. **Start the API**
 ```bash
 # Windows
 production/start_production.bat
@@ -125,19 +131,26 @@ curl http://localhost:8080/health
 ## 📁 Project Structure
 
 ```
-email-nlp-project/
+email-nlp-classification-api/
 ├── production/                 # Production API
 │   ├── production_api.py      # Main API server
 │   ├── requirements.txt       # Dependencies
 │   ├── config/               # Configuration files
-│   ├── models/               # Trained models
+│   ├── models/               # Trained models (download separately)
 │   ├── logs/                 # Application logs
 │   └── README.md            # Production documentation
-├── perfect_accuracy_model_20250730_171812.pkl    # Latest model
-├── perfect_accuracy_label_encoder_20250730_171812.pkl
-├── perfect_accuracy_scaler_20250730_171812.pkl
+├── models/                    # Model files (download separately)
+├── download_models.py         # Model download script
 └── README.md                 # This file
 ```
+
+## 📥 Model Files
+
+The trained model files are large (~700MB total) and are not included in the repository. To get the model files:
+
+1. **Download manually**: Use the `download_models.py` script (configure URLs first)
+2. **Alternative**: Contact the maintainer for direct model file access
+3. **Train your own**: Use the training scripts in the development branch
 
 ## 🐳 Docker Deployment
 
