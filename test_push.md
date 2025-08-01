@@ -1,3 +1,0 @@
-# Test Push
-
-This is a test file to verify GitHub push functionality. 
