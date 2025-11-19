@@ -1,0 +1,40 @@
+{
+  "timestamp": "20250814_031322",
+  "validation_size": 500,
+  "classical_accuracy": 0.638,
+  "bart_accuracy": 0.456,
+  "optimal_weight": 0.4,
+  "optimal_accuracy": 0.648,
+  "improvement": 0.010000000000000009,
+  "config": {
+    "model_files": {
+      "model": "models/final_calibrated_model_*.pkl",
+      "scaler": "models/final_scaler_*.pkl",
+      "encoder": "models/final_label_encoder_*.pkl"
+    },
+    "features": {
+      "max_length": 1000,
+      "use_tfidf": true,
+      "use_sentiment": true,
+      "use_length_features": true
+    },
+    "categories": [
+      "Personal",
+      "Spam",
+      "Standard",
+      "Urgent",
+      "Work"
+    ],
+    "confidence_threshold": 0.7,
+    "batch_size": 100,
+    "bart": {
+      "enabled": false,
+      "model_name": "facebook/bart-large-mnli",
+      "device": -1,
+      "multi_label": false,
+      "always_ensemble": true,
+      "weight": 0.5,
+      "hypothesis_template": "This text is about {}."
+    }
+  }
+}

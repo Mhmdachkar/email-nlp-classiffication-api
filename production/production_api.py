@@ -19,6 +19,8 @@ import logging
 from datetime import datetime
 import time
 from performance_optimizer import PerformanceOptimizer
+from components.bart_classifier import BartZeroShotClassifier
+from components.enhanced_bart_classifier import EnhancedBartClassifier
 
 # Configure logging
 logging.basicConfig(
@@ -49,7 +51,9 @@ class ProductionEmailClassifier:
         self.label_encoder = None
         self.is_loaded = False
         self.config = self.load_config(config_dir)
+        self.bart = None
         self.load_model()
+        self._init_bart()
     
     def load_config(self, config_dir):
         """Load configuration files."""
@@ -100,6 +104,41 @@ class ProductionEmailClassifier:
         except Exception as e:
             logger.error(f"❌ Error loading model: {e}")
             return False
+
+    def _init_bart(self):
+        """Initialize optional BART zero-shot classifier based on config."""
+        try:
+            bart_cfg = (self.config or {}).get("bart", {})
+            if not bart_cfg or not bart_cfg.get("enabled", False):
+                logger.info("BART is disabled in config")
+                return
+            categories = (self.config or {}).get("categories", [])
+            if not categories:
+                logger.warning("No categories found for BART; disabling BART")
+                return
+            
+            # Choose enhanced or standard BART classifier
+            use_enhanced = bart_cfg.get("use_enhanced_classifier", True)
+            
+            if use_enhanced:
+                self.bart = EnhancedBartClassifier(
+                    model_name=bart_cfg.get("model_name", "facebook/bart-large-mnli"),
+                    device=bart_cfg.get("device", -1),
+                    use_enhanced_labels=bart_cfg.get("use_enhanced_labels", True),
+                    use_preprocessing=bart_cfg.get("use_preprocessing", True),
+                )
+                logger.info("✅ Enhanced BART classifier initialized")
+            else:
+                self.bart = BartZeroShotClassifier(
+                    model_name=bart_cfg.get("model_name", "facebook/bart-large-mnli"),
+                    candidate_labels=categories,
+                    multi_label=bart_cfg.get("multi_label", False),
+                    device=bart_cfg.get("device", -1),
+                    hypothesis_template=bart_cfg.get("hypothesis_template", "This text is about {}."),
+                )
+                logger.info("✅ Standard BART classifier initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize BART classifier: {e}")
     
     def classify_email(self, email_text):
         """Classify email with production-ready error handling."""
@@ -128,14 +167,42 @@ class ProductionEmailClassifier:
             
             # Check confidence threshold
             threshold = self.config.get('confidence_threshold', 0.7)
-            if confidence < threshold:
-                predicted_category = 'Uncertain'
+            low_confidence = confidence < threshold
             
             # Create probabilities dictionary
             prob_dict = {}
             for i, category in enumerate(self.label_encoder.classes_):
                 prob_dict[category] = float(probabilities[i])
             
+            # Optional BART fusion when low confidence or enabled ensemble
+            bart_cfg = (self.config or {}).get("bart", {})
+            use_bart = self.bart is not None and (bart_cfg.get("enabled", False))
+            if use_bart and (low_confidence or bart_cfg.get("always_ensemble", True)):
+                try:
+                    bart_label, bart_conf, bart_scores = self.bart.classify(
+                        email_text,
+                        candidate_labels=list(self.label_encoder.classes_),
+                        multi_label=bart_cfg.get("multi_label", False),
+                        hypothesis_template=bart_cfg.get("hypothesis_template", "This text is about {}."),
+                    )
+                    weight = float(bart_cfg.get("weight", 0.5))
+                    # Normalize classical probs to dict with all labels
+                    combined = {}
+                    for label in self.label_encoder.classes_:
+                        classic_p = prob_dict.get(label, 0.0)
+                        bart_p = bart_scores.get(label, 0.0)
+                        combined[label] = (1.0 - weight) * classic_p + weight * bart_p
+                    # Re-select predicted label and confidence
+                    predicted_category = max(combined, key=combined.get)
+                    confidence = float(combined[predicted_category])
+                    prob_dict = {k: float(v) for k, v in combined.items()}
+                except Exception as bart_err:
+                    logger.error(f"BART fusion failed: {bart_err}")
+                    # proceed with classic outputs
+
+            if low_confidence and not use_bart:
+                predicted_category = 'Uncertain'
+
             return {
                 'category': predicted_category,
                 'confidence': float(confidence),

@@ -18,5 +18,17 @@
     "Work"
   ],
   "confidence_threshold": 0.7,
-  "batch_size": 100
+  "batch_size": 100,
+  "bart": {
+    "enabled": false,
+    "model_name": "facebook/bart-large-mnli",
+    "device": -1,
+    "multi_label": false,
+    "always_ensemble": true,
+    "weight": 0.4,
+    "hypothesis_template": "This text is about {}.",
+    "use_enhanced_classifier": true,
+    "use_enhanced_labels": true,
+    "use_preprocessing": true
+  }
 }
